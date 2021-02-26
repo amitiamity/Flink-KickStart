@@ -5,6 +5,7 @@ import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.operators.DataSource;
 import org.apache.flink.api.java.tuple.Tuple3;
+import org.apache.flink.api.java.utils.ParameterTool;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -14,8 +15,13 @@ public class FilterMovieApplication {
     public static void main(String...s) throws Exception {
         ExecutionEnvironment executionEnvironment = ExecutionEnvironment.getExecutionEnvironment();
 
+        //Read command line argument to accept file path names
+        ParameterTool parameterTool = ParameterTool.fromArgs(s);
+        String inputFile = parameterTool.get("input");
+        String outputFile =  parameterTool.get("output");
+
         DataSource<Tuple3<Long, String, String>> lines = executionEnvironment
-                .readCsvFile("/home/amit/Documents/myworkspace/Flink-KickStart/src/main/resources/ml-latest-small/movies.csv")
+                .readCsvFile(inputFile)
                 .ignoreFirstLine()
                 .parseQuotedStrings('"')
                 .ignoreInvalidLines()
@@ -30,7 +36,7 @@ public class FilterMovieApplication {
 
         DataSet<Movie> filteredMovies = movieDataSet.filter(movie -> movie.getGenres().contains("Drama"));
 
-        filteredMovies.writeAsText("filter-output.txt");
+        filteredMovies.writeAsText(outputFile);
         executionEnvironment.execute();
     }
 }
