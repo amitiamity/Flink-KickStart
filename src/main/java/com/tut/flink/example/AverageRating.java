@@ -6,6 +6,9 @@ import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.operators.DataSource;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple3;
+import org.apache.flink.shaded.netty4.io.netty.handler.codec.dns.DnsOpCode;
+import org.apache.flink.types.DoubleValue;
+import org.apache.flink.types.StringValue;
 import org.apache.flink.util.Collector;
 
 import java.util.Comparator;
@@ -17,18 +20,18 @@ public class AverageRating {
         ExecutionEnvironment executionEnvironment = ExecutionEnvironment.getExecutionEnvironment();
 
         DataSource<Tuple3<Long, String, String>> movies = executionEnvironment
-                .readCsvFile("/home/amit/Documents/myworkspace/flink_tutorial/src/main/resources/ml-latest-small/movies.csv")
+                .readCsvFile("/home/amit/Documents/myworkspace/Flink-KickStart/src/main/resources/ml-latest-small/movies.csv")
                 .ignoreFirstLine()
                 .parseQuotedStrings('"')
                 .ignoreInvalidLines()
                 .types(Long.class, String.class, String.class);
 
         DataSource<Tuple2<Long, Double>> ratings = executionEnvironment
-                .readCsvFile("/home/amit/Documents/myworkspace/flink_tutorial/src/main/resources/ml-latest-small/ratings.csv")
+                .readCsvFile("/home/amit/Documents/myworkspace/Flink-KickStart/src/main/resources/ml-latest-small/ratings.csv")
                 .ignoreFirstLine()
                 .parseQuotedStrings('"')
                 .ignoreInvalidLines()
-                .includeFields(false, true, false, true)
+                .includeFields(false, true, true, false)
                 .types(Long.class, Double.class);
 
         List<Tuple2<String, Double>> distributions = movies.join(ratings)
@@ -36,24 +39,28 @@ public class AverageRating {
                 .where(0)
                 //equal to what field is being matched to Rating class
                 .equalTo(0)
-                .with(new JoinFunction<Tuple3<Long, String, String>, Tuple2<Long, Double>, Tuple3<String, String, Double>>() {
+                .with(new JoinFunction<Tuple3<Long, String, String>, Tuple2<Long, Double>, Tuple3<StringValue, StringValue, DoubleValue>>() {
+                    StringValue name = new StringValue();
+                    StringValue genre = new StringValue();
+                    DoubleValue score = new DoubleValue();
+
                     @Override
-                    public Tuple3<String, String, Double> join(Tuple3<Long, String, String> movie, Tuple2<Long, Double> rating) throws Exception {
-                        String name = movie.f1;
-                        String genre = movie.f2.split("\\|")[0];
-                        Double score = rating.f1;
+                    public Tuple3<StringValue, StringValue, DoubleValue> join(Tuple3<Long, String, String> movie, Tuple2<Long, Double> rating) throws Exception {
+                        name.setValue(movie.f1);
+                        genre.setValue(movie.f2.split("\\|")[0]);
+                        score.setValue(rating.f1);
                         return new Tuple3<>(name, genre, score);
                     }
                 }).groupBy(1)
-                .reduceGroup(new GroupReduceFunction<Tuple3<String, String, Double>, Tuple2<String, Double>>() {
+                .reduceGroup(new GroupReduceFunction<Tuple3<StringValue, StringValue, DoubleValue>, Tuple2<String, Double>>() {
                     @Override
-                    public void reduce(Iterable<Tuple3<String, String, Double>> iterable, Collector<Tuple2<String, Double>> collector) throws Exception {
+                    public void reduce(Iterable<Tuple3<StringValue, StringValue, DoubleValue>> iterable, Collector<Tuple2<String, Double>> collector) throws Exception {
                         String genre = null;
                         int count = 0;
                         double totalScore = 0;
-                        for (Tuple3<String, String, Double> movie : iterable) {
-                            genre = movie.f1;
-                            totalScore += movie.f2;
+                        for (Tuple3<StringValue, StringValue, DoubleValue> movie : iterable) {
+                            genre = movie.f1.getValue();
+                            totalScore += movie.f2.getValue();
                             count++;
                         }
                         collector.collect(new Tuple2<>(genre, totalScore / count));

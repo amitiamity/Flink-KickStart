@@ -15,7 +15,7 @@ public class FilterMovieApplication {
         ExecutionEnvironment executionEnvironment = ExecutionEnvironment.getExecutionEnvironment();
 
         DataSource<Tuple3<Long, String, String>> lines = executionEnvironment
-                .readCsvFile("/home/amit/Documents/myworkspace/flink_tutorial/src/main/resources/ml-latest-small/movies.csv")
+                .readCsvFile("/home/amit/Documents/myworkspace/Flink-KickStart/src/main/resources/ml-latest-small/movies.csv")
                 .ignoreFirstLine()
                 .parseQuotedStrings('"')
                 .ignoreInvalidLines()
@@ -30,8 +30,6 @@ public class FilterMovieApplication {
 
         DataSet<Movie> filteredMovies = movieDataSet.filter(movie -> movie.getGenres().contains("Drama"));
 
-
-        //Join and Group By example
         filteredMovies.writeAsText("filter-output.txt");
         executionEnvironment.execute();
     }
