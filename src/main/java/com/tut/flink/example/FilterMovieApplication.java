@@ -38,5 +38,6 @@ public class FilterMovieApplication {
 
         filteredMovies.writeAsText(outputFile);
         executionEnvironment.execute();
+
     }
 }
