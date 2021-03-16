@@ -32,7 +32,7 @@ public class FilterTweets {
         streamExecutionEnvironment.execute();
     }
 
-    private static class MapToTweet implements MapFunction<String, Tweet> {
+    public static class MapToTweet implements MapFunction<String, Tweet> {
 
         static private final ObjectMapper mapper = new ObjectMapper();
 
