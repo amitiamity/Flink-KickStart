@@ -35,7 +35,7 @@ public class NumberOfTweetsPerLang {
                 .map(new FilterTweets.MapToTweet())
                 //filter only if language is available
                 .filter(tweet -> tweet.getLang() != null)
-                //key strategy : use it to create keyed windows
+                //key strategy : use it to create keyed windows (Stream types)
                 .keyBy((KeySelector<Tweet, String>) tweet -> tweet.getLang())
                 //time for each window
                 .timeWindow(Time.minutes(1))

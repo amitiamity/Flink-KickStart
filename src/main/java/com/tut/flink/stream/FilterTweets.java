@@ -8,6 +8,9 @@ import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMap
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.connectors.twitter.TwitterSource;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Properties;
 
 public class FilterTweets {
@@ -43,7 +46,19 @@ public class FilterTweets {
             JsonNode langNode = tweetJson.get("lang");
             String text = textNode != null ? textNode.textValue() : null;
             String lang = langNode != null ? langNode.textValue() : null;
-            return new Tweet(text, lang);
+
+            List<String> tags = new ArrayList<>();
+
+            JsonNode entities = tweetJson.get("entities");
+            if (entities != null) {
+                JsonNode hashTags = entities.get("hashtags");
+                for (Iterator<JsonNode> iter = hashTags.elements(); iter.hasNext(); ) {
+                    JsonNode node = iter.next();
+                    String hashtag = node.get("text").textValue();
+                    tags.add(hashtag);
+                }
+            }
+            return Tweet.builder().text(text).lang(lang).tags(tags).build();
         }
     }
 }
